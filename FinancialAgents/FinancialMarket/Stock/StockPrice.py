@@ -1,3 +1,4 @@
+
 import numpy as np
 import pandas as pd  # 用于创建和保存表格
 import matplotlib.pyplot as plt
@@ -72,13 +73,24 @@ for sector in range(num_sectors):
 dates = pd.date_range(start='2023-01-01', periods=num_days)
 df = pd.DataFrame(stock_prices, columns=stock_codes, index=dates)
 
+
+
 # 将表格转换为长格式以包含股票代码和行业
 df_long = df.reset_index().melt(id_vars=['index'], var_name='Stock_Code', value_name='Price')
 df_long['Sector'] = df_long['Stock_Code'].apply(lambda x: stock_sectors[int(x)-1])
 df_long.rename(columns={'index': 'Date'}, inplace=True)
 
-# 保存到CSV文件
-csv_file = '/Volumes/Jennie/Agent/FinAgents/FinAi/data/stock_prices_with_sector.csv'
+df_long["Return"] = df_long['Price'].pct_change()
+# df_long["Volatility"] = df_long['Return'].std()
+
+df_long['Volatility_5D'] = df_long.groupby('Stock_Code')['Return'].rolling(window=5).std().reset_index(level=0, drop=True)
+
+# 提取包含波动率的DataFrame
+# volatility_df = df_long[['Date', 'Stock_Code', 'Sector', 'Price', 'Return', 'Volatility_5D']]
+
+# import ace_tools as tools; 
+# tools.display_dataframe_to_user(name="Volatility Data", dataframe=volatility_df)
+csv_file = 'stock_prices_with_sector.csv'
 df_long.to_csv(csv_file, index=False)
 
 # 绘制一个行业中的部分股票价格路径
