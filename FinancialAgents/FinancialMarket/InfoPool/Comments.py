@@ -2,16 +2,36 @@ import csv
 from datetime import datetime
 import os
 
+from openai import OpenAI
+
+api_key = "sk-VUQOgoxNjtiPxFDo895535A3635847B7A903688099089385"
+api_base = "https://api.xi-ai.cn/v1"
+client = OpenAI(api_key=api_key, base_url=api_base)
+
+
+
+
 # 定义CSV文件路径
 csv_file = '/Volumes/Jennie/Agent/FinAgents/FinAi/data/comment.csv'
 
 # 定义列名
-fieldnames = ['user_id', 'username', 'comment_date', 'comment_text']
+fieldnames = ['user_id', 'username', 'comment_date', 'comment_text', 'sentiment']
 
 # 提交评论
 def submit_comment(user_id, username, comment_text):
     comment_date = datetime.now().strftime('%Y-%m-%d')
-    comment = {'user_id': user_id, 'username': username, 'comment_date': comment_date, 'comment_text': comment_text}
+    completion = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+      {"role": "system", "content": "You are a sentiment analysist."},
+      {"role": "user", "content": f"Only give me the sentiment analysis result of this text: {comment_text}, Positive, Negative, Neutral"}
+      ]
+    )
+  
+    res = completion.choices[0].message.content
+
+
+    comment = {'user_id': user_id, 'username': username, 'comment_date': comment_date, 'comment_text': comment_text, 'sentiment': res}
 
     # 检查文件是否存在，若不存在则写入列名
     file_exists = os.path.isfile(csv_file)
